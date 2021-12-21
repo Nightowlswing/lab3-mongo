@@ -1,0 +1,51 @@
+services:
+  cfg-1:
+    container_name: "cfg-1"
+    image: mongo:4.0.1
+    command: 'bin/bash -c "mongod --replSet my-cfg-set --bind_ip_all --port 27017 --configsvr"'
+  cfg-2:
+    container_name: "cfg-2"
+    image: mongo:4.0.1
+    command: 'bin/bash -c "mongod --replSet my-cfg-set --bind_ip_all --port 27017 --configsvr"'
+  cfg-3:
+    container_name: "cfg-3"
+    image: mongo:4.0.1
+    command: 'bin/bash -c "mongod --replSet my-cfg-set --bind_ip_all --port 27017 --configsvr"'
+
+  mongo-1:
+    container_name: "mongo-1"
+    image: mongo:4.0.1
+    command: 'bin/bash -c "mongod --shardsvr --replSet my-mongo-set --bind_ip_all --port 27017"'
+    depends_on:
+      - "cfg-1"
+      - "cfg-2"
+      - "cfg-3"
+  mongo-2:
+    container_name: "mongo-2"
+    image: mongo:4.0.1
+    command: 'bin/bash -c "mongod --shardsvr --replSet my-mongo-set --bind_ip_all --port 27017"'
+    depends_on:
+      - "cfg-1"
+      - "cfg-2"
+      - "cfg-3"
+  mongo-3:
+    container_name: "mongo-3"
+    image: mongo:4.0.1
+    command: 'bin/bash -c "mongod --shardsvr --replSet my-mongo-set --bind_ip_all --port 27017"'
+    depends_on:
+      - "cfg-1"
+      - "cfg-2"
+
+  router:
+    container_name: "router"
+    image: mongo:4.0.1
+    ports:
+        - "30102:27017"
+    command: 'bin/bash -c "mongos --configdb my-cfg-set/cfg-1:27017,cfg-2:27017,cfg-3:27017 --bind_ip_all  --port 27017"'
+    links:
+      - "cfg-1:cfg-1"
+      - "cfg-2:cfg-2"
+      - "cfg-3:cfg-3"
+      - "mongo-1:mongo-1"
+      - "mongo-2:mongo-2"
+      - "mongo-3:mongo-3"
